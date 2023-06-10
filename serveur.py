@@ -1,6 +1,6 @@
 import socket
 
-HOST_IP = "127.0.0.1"
+HOST_IP = ""
 HOST_PORT = 32000
 MAX_DATA_SIZE = 1024
 

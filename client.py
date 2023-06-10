@@ -5,7 +5,7 @@ import platform
 import os
 from PIL import ImageGrab
 
-HOST_IP = "127.0.0.1"
+HOST_IP = "" # IP ou nom de domaine du serveur
 HOST_PORT = 32000
 MAX_DATA_SIZE = 1024
 
