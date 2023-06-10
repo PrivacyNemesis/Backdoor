@@ -1,3 +1,5 @@
+""" SERVEUR """
+
 import socket
 
 HOST_IP = ""
